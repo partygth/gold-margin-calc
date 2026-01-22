@@ -116,13 +116,13 @@
       font-size: 0.85rem;
     }
 
-    /* 列宽设置 */
-    th:nth-child(1), td:nth-child(1) { width: 12%; }  /* 合约 */
-    th:nth-child(2), td:nth-child(2) { width: 14%; }  /* 预结算价 */
-    th:nth-child(3), td:nth-child(3) { width: 12%; }  /* 持仓手数 */
-    th:nth-child(4), td:nth-child(4) { width: 12%; }  /* 保证金比例 */
-    th:nth-child(5), td:nth-child(5) { width: 25%; }  /* 所需保证金 */
-    th:nth-child(6), td:nth-child(6) { width: 25%; }  /* 可开手数 */
+    /* 列宽设置 - 按字符数计算 */
+    th:nth-child(1), td:nth-child(1) { width: 60px; }   /* 合约: 4位数字 */
+    th:nth-child(2), td:nth-child(2) { width: 80px; }   /* 预结算价: 6位含小数点 */
+    th:nth-child(3), td:nth-child(3) { width: 60px; }   /* 持仓手数: 4位数字 */
+    th:nth-child(4), td:nth-child(4) { width: 50px; }   /* 保证金比例: 2位数字 */
+    th:nth-child(5), td:nth-child(5) { width: auto; }   /* 所需保证金 */
+    th:nth-child(6), td:nth-child(6) { width: auto; }   /* 可开手数 */
 
     td input {
       width: 100%;
@@ -133,7 +133,11 @@
 
     .result-cell {
       font-weight: 500;
-      color: #2c3e50;
+      color: #999;
+    }
+
+    .result-cell.positive {
+      color: #27ae60;
     }
 
     .result-cell.negative {
@@ -162,8 +166,12 @@
 
     .available-funds .value {
       font-weight: 600;
-      color: #27ae60;
+      color: #999;
       margin-left: 8px;
+    }
+
+    .available-funds .value.positive {
+      color: #27ae60;
     }
 
     .available-funds .value.negative {
@@ -262,7 +270,7 @@
     <div class="card">
       <div class="equity-section">
         <label for="equity">当前权益</label>
-        <input type="number" id="equity" min="0" step="any" placeholder="请输入" oninput="calculate()">
+        <input type="text" id="equity" inputmode="decimal" placeholder="请输入" oninput="handleEquityInput(this)" onblur="formatEquityDisplay()">
         <span class="unit">元</span>
       </div>
     </div>
@@ -306,6 +314,45 @@
     const CONTRACT_MULTIPLIER = 1000; // 黄金期货合约乘数
     const CONTRACT_COUNT = 3;
 
+    // 千分位格式化（会计格式）
+    function formatThousands(num) {
+      if (num === '' || num === null || num === undefined) return '';
+      const parts = num.toString().split('.');
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      return parts.join('.');
+    }
+
+    // 解析千分位数字
+    function parseThousands(str) {
+      if (!str) return '';
+      return str.replace(/,/g, '');
+    }
+
+    // 处理当前权益输入
+    function handleEquityInput(input) {
+      // 只保留数字、小数点和逗号
+      let value = input.value.replace(/[^\d.,]/g, '');
+      // 移除逗号后解析
+      const numValue = parseThousands(value);
+      input.value = numValue;
+      saveAndCalculate();
+    }
+
+    // 格式化当前权益显示（失焦时）
+    function formatEquityDisplay() {
+      const input = document.getElementById('equity');
+      const value = parseThousands(input.value);
+      if (value && !isNaN(parseFloat(value))) {
+        input.value = formatThousands(value);
+      }
+    }
+
+    // 获取当前权益的原始数值
+    function getEquityValue() {
+      const input = document.getElementById('equity');
+      return parseThousands(input.value);
+    }
+
     // 初始化表格
     function initTable() {
       const tbody = document.getElementById('contractTable');
@@ -337,9 +384,9 @@
       try {
         const data = JSON.parse(saved);
 
-        // 恢复当前权益
-        if (data.equity !== undefined) {
-          document.getElementById('equity').value = data.equity;
+        // 恢复当前权益（显示千分位格式）
+        if (data.equity !== undefined && data.equity !== '') {
+          document.getElementById('equity').value = formatThousands(data.equity);
         }
 
         // 恢复合约数据
@@ -367,7 +414,7 @@
     // 保存数据到 localStorage
     function saveData() {
       const data = {
-        equity: document.getElementById('equity').value,
+        equity: getEquityValue(),  // 保存原始数值（无千分位）
         contracts: []
       };
 
@@ -391,7 +438,7 @@
 
     // 计算
     function calculate() {
-      const equityInput = document.getElementById('equity').value;
+      const equityInput = getEquityValue();
       const equity = parseFloat(equityInput);
 
       let totalRequired = 0;
@@ -428,7 +475,7 @@
 
         if (formattedRequired !== null) {
           requiredCell.textContent = formattedRequired;
-          requiredCell.className = required < 0 ? 'result-cell negative' : 'result-cell';
+          requiredCell.className = required < 0 ? 'result-cell negative' : 'result-cell positive';
           totalRequired += required;
         } else {
           requiredCell.textContent = '--';
@@ -458,7 +505,7 @@
 
       if (formattedAvailable !== null) {
         availableFundsEl.textContent = formattedAvailable;
-        availableFundsEl.className = availableFunds < 0 ? 'value negative' : 'value';
+        availableFundsEl.className = availableFunds < 0 ? 'value negative' : 'value positive';
       } else {
         availableFundsEl.textContent = '--';
         availableFundsEl.className = 'value invalid';
@@ -489,7 +536,7 @@
 
         if (formattedCanOpen !== null) {
           canOpenCell.textContent = formattedCanOpen;
-          canOpenCell.className = canOpen < 0 ? 'result-cell negative' : 'result-cell';
+          canOpenCell.className = canOpen < 0 ? 'result-cell negative' : 'result-cell positive';
         } else {
           canOpenCell.textContent = '--';
           canOpenCell.className = 'result-cell invalid';
