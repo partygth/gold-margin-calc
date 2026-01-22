@@ -115,15 +115,15 @@
       font-size: 0.8rem;
     }
 
-    /* 输入列紧凑，结果列自适应 */
-    td:nth-child(1) input { width: 52px; }   /* 合约: 4位 */
-    td:nth-child(2) input { width: 72px; }   /* 预结算价: 7位含小数点 */
-    td:nth-child(3) input { width: 52px; }   /* 持仓手数: 4位 */
-    td:nth-child(4) input { width: 40px; }   /* 保证金比例: 2位 */
+    /* 输入框宽度 - 确保内容完整显示 */
+    td:nth-child(1) input { width: 60px; }   /* 合约: 4位数字 */
+    td:nth-child(2) input { width: 88px; }   /* 预结算价: 6位+小数点 */
+    td:nth-child(3) input { width: 60px; }   /* 持仓手数: 4位数字 */
+    td:nth-child(4) input { width: 42px; }   /* 保证金比例: 2位数字 */
 
     td input {
       text-align: center;
-      padding: 8px 2px;
+      padding: 8px 4px;
       font-size: 14px;
     }
 
@@ -249,14 +249,14 @@
       }
 
       td input {
-        padding: 6px 2px;
+        padding: 6px 3px;
         font-size: 13px;
       }
 
-      td:nth-child(1) input { width: 48px; }
-      td:nth-child(2) input { width: 68px; }
-      td:nth-child(3) input { width: 48px; }
-      td:nth-child(4) input { width: 36px; }
+      td:nth-child(1) input { width: 54px; }
+      td:nth-child(2) input { width: 80px; }
+      td:nth-child(3) input { width: 54px; }
+      td:nth-child(4) input { width: 38px; }
     }
   </style>
 </head>
