@@ -99,11 +99,12 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 600px;
+      min-width: 560px;
+      table-layout: fixed;
     }
 
     th, td {
-      padding: 12px 8px;
+      padding: 12px 6px;
       text-align: center;
       border-bottom: 1px solid #eee;
     }
@@ -112,13 +113,22 @@
       background: #f8f9fa;
       font-weight: 500;
       color: #555;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
     }
+
+    /* 列宽设置 */
+    th:nth-child(1), td:nth-child(1) { width: 12%; }  /* 合约 */
+    th:nth-child(2), td:nth-child(2) { width: 14%; }  /* 预结算价 */
+    th:nth-child(3), td:nth-child(3) { width: 12%; }  /* 持仓手数 */
+    th:nth-child(4), td:nth-child(4) { width: 12%; }  /* 保证金比例 */
+    th:nth-child(5), td:nth-child(5) { width: 25%; }  /* 所需保证金 */
+    th:nth-child(6), td:nth-child(6) { width: 25%; }  /* 可开手数 */
 
     td input {
       width: 100%;
-      max-width: 120px;
+      max-width: none;
       text-align: center;
+      padding: 8px 4px;
     }
 
     .result-cell {
@@ -229,12 +239,17 @@
 
     @media (max-width: 480px) {
       table {
-        min-width: 500px;
+        min-width: 480px;
       }
 
       th, td {
         padding: 8px 2px;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
+      }
+
+      td input {
+        padding: 6px 2px;
+        font-size: 13px;
       }
     }
   </style>
@@ -259,9 +274,9 @@
           <thead>
             <tr>
               <th>合约</th>
-              <th>预结算价</th>
-              <th>持仓手数</th>
-              <th>保证金比例</th>
+              <th>预结<br>算价</th>
+              <th>持仓<br>手数</th>
+              <th>保证金<br>比例</th>
               <th>所需保证金<br><small>(万元)</small></th>
               <th>可开手数</th>
             </tr>
