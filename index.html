@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>黄金期货保证金试算</title>
+
+  <!-- PWA 支持 -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4a90d9">
+
+  <!-- iOS PWA 支持 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="保证金试算">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      line-height: 1.6;
+      padding: 16px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      text-align: center;
+      margin-bottom: 20px;
+      color: #1a1a1a;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .equity-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .equity-section label {
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .equity-section input {
+      flex: 1;
+      min-width: 150px;
+      max-width: 200px;
+    }
+
+    .equity-section .unit {
+      color: #666;
+    }
+
+    input[type="number"],
+    input[type="text"] {
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 16px;
+      transition: border-color 0.2s;
+    }
+
+    input[type="number"]:focus,
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #4a90d9;
+    }
+
+    input[type="number"]:invalid {
+      border-color: #e74c3c;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+    }
+
+    th, td {
+      padding: 12px 8px;
+      text-align: center;
+      border-bottom: 1px solid #eee;
+    }
+
+    th {
+      background: #f8f9fa;
+      font-weight: 500;
+      color: #555;
+      font-size: 0.9rem;
+    }
+
+    td input {
+      width: 100%;
+      max-width: 120px;
+      text-align: center;
+    }
+
+    .result-cell {
+      font-weight: 500;
+      color: #2c3e50;
+    }
+
+    .result-cell.negative {
+      color: #e74c3c;
+    }
+
+    .result-cell.invalid {
+      color: #999;
+    }
+
+    .summary-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .available-funds {
+      font-size: 1.1rem;
+    }
+
+    .available-funds .label {
+      color: #666;
+    }
+
+    .available-funds .value {
+      font-weight: 600;
+      color: #27ae60;
+      margin-left: 8px;
+    }
+
+    .available-funds .value.negative {
+      color: #e74c3c;
+    }
+
+    .available-funds .value.invalid {
+      color: #999;
+    }
+
+    .btn-reset {
+      padding: 10px 24px;
+      background: #e74c3c;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-reset:hover {
+      background: #c0392b;
+    }
+
+    .btn-reset:active {
+      transform: scale(0.98);
+    }
+
+    /* 响应式布局 */
+    @media (max-width: 768px) {
+      body {
+        padding: 12px;
+      }
+
+      h1 {
+        font-size: 1.25rem;
+      }
+
+      .card {
+        padding: 16px;
+      }
+
+      th, td {
+        padding: 10px 4px;
+        font-size: 0.85rem;
+      }
+
+      td input {
+        padding: 8px 4px;
+        font-size: 14px;
+      }
+
+      .equity-section {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .equity-section input {
+        max-width: none;
+      }
+
+      .summary-section {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+      }
+
+      .btn-reset {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 480px) {
+      table {
+        min-width: 500px;
+      }
+
+      th, td {
+        padding: 8px 2px;
+        font-size: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>黄金期货保证金试算</h1>
+
+    <!-- 当前权益 -->
+    <div class="card">
+      <div class="equity-section">
+        <label for="equity">当前权益</label>
+        <input type="number" id="equity" min="0" step="any" placeholder="请输入" oninput="calculate()">
+        <span class="unit">元</span>
+      </div>
+    </div>
+
+    <!-- 合约表格 -->
+    <div class="card">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>合约</th>
+              <th>预结算价</th>
+              <th>持仓手数</th>
+              <th>保证金比例</th>
+              <th>所需保证金<br><small>(万元)</small></th>
+              <th>可开手数</th>
+            </tr>
+          </thead>
+          <tbody id="contractTable">
+            <!-- 动态生成 -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 汇总区域 -->
+    <div class="card">
+      <div class="summary-section">
+        <div class="available-funds">
+          <span class="label">预结算总可用资金：</span>
+          <span class="value" id="availableFunds">--</span>
+          <span class="unit">万元</span>
+        </div>
+        <button class="btn-reset" onclick="resetAll()">重置</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'gold_futures_margin_calc';
+    const CONTRACT_MULTIPLIER = 1000; // 黄金期货合约乘数
+    const CONTRACT_COUNT = 3;
+
+    // 初始化表格
+    function initTable() {
+      const tbody = document.getElementById('contractTable');
+      let html = '';
+
+      for (let i = 0; i < CONTRACT_COUNT; i++) {
+        html += `
+          <tr>
+            <td><input type="text" id="contract_${i}" placeholder="合约代码" oninput="saveAndCalculate()"></td>
+            <td><input type="number" id="price_${i}" min="0" step="any" placeholder="价格" oninput="saveAndCalculate()"></td>
+            <td><input type="number" id="position_${i}" min="0" step="1" placeholder="手数" oninput="saveAndCalculate()"></td>
+            <td>
+              <input type="number" id="margin_${i}" min="0" step="any" placeholder="%" oninput="saveAndCalculate()">
+            </td>
+            <td class="result-cell" id="required_${i}">--</td>
+            <td class="result-cell" id="canOpen_${i}">--</td>
+          </tr>
+        `;
+      }
+
+      tbody.innerHTML = html;
+    }
+
+    // 从 localStorage 加载数据
+    function loadData() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) return;
+
+      try {
+        const data = JSON.parse(saved);
+
+        // 恢复当前权益
+        if (data.equity !== undefined) {
+          document.getElementById('equity').value = data.equity;
+        }
+
+        // 恢复合约数据
+        if (data.contracts) {
+          data.contracts.forEach((contract, i) => {
+            if (contract.code !== undefined) {
+              document.getElementById(`contract_${i}`).value = contract.code;
+            }
+            if (contract.price !== undefined) {
+              document.getElementById(`price_${i}`).value = contract.price;
+            }
+            if (contract.position !== undefined) {
+              document.getElementById(`position_${i}`).value = contract.position;
+            }
+            if (contract.margin !== undefined) {
+              document.getElementById(`margin_${i}`).value = contract.margin;
+            }
+          });
+        }
+      } catch (e) {
+        console.error('加载数据失败:', e);
+      }
+    }
+
+    // 保存数据到 localStorage
+    function saveData() {
+      const data = {
+        equity: document.getElementById('equity').value,
+        contracts: []
+      };
+
+      for (let i = 0; i < CONTRACT_COUNT; i++) {
+        data.contracts.push({
+          code: document.getElementById(`contract_${i}`).value,
+          price: document.getElementById(`price_${i}`).value,
+          position: document.getElementById(`position_${i}`).value,
+          margin: document.getElementById(`margin_${i}`).value
+        });
+      }
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    // 格式化数字（保留2位小数）
+    function formatNumber(num) {
+      if (!isFinite(num) || isNaN(num)) return null;
+      return num.toFixed(2);
+    }
+
+    // 计算
+    function calculate() {
+      const equityInput = document.getElementById('equity').value;
+      const equity = parseFloat(equityInput);
+
+      let totalRequired = 0;
+      let allValid = true;
+
+      // 计算每个合约的所需保证金
+      for (let i = 0; i < CONTRACT_COUNT; i++) {
+        const priceInput = document.getElementById(`price_${i}`).value;
+        const positionInput = document.getElementById(`position_${i}`).value;
+        const marginInput = document.getElementById(`margin_${i}`).value;
+
+        const price = parseFloat(priceInput);
+        const position = parseFloat(positionInput);
+        const marginRate = parseFloat(marginInput) / 100; // 转换百分比
+
+        const requiredCell = document.getElementById(`required_${i}`);
+        const canOpenCell = document.getElementById(`canOpen_${i}`);
+
+        // 检查输入是否有效
+        if (priceInput === '' || positionInput === '' || marginInput === '' ||
+            isNaN(price) || isNaN(position) || isNaN(marginRate) ||
+            price < 0 || position < 0 || marginRate < 0) {
+          requiredCell.textContent = '--';
+          requiredCell.className = 'result-cell invalid';
+          canOpenCell.textContent = '--';
+          canOpenCell.className = 'result-cell invalid';
+          allValid = false;
+          continue;
+        }
+
+        // 计算所需保证金（万元）
+        const required = (price * CONTRACT_MULTIPLIER * position * marginRate) / 10000;
+        const formattedRequired = formatNumber(required);
+
+        if (formattedRequired !== null) {
+          requiredCell.textContent = formattedRequired;
+          requiredCell.className = required < 0 ? 'result-cell negative' : 'result-cell';
+          totalRequired += required;
+        } else {
+          requiredCell.textContent = '--';
+          requiredCell.className = 'result-cell invalid';
+          allValid = false;
+        }
+      }
+
+      // 计算预结算总可用资金（万元）
+      const availableFundsEl = document.getElementById('availableFunds');
+
+      if (equityInput === '' || isNaN(equity) || equity < 0) {
+        availableFundsEl.textContent = '--';
+        availableFundsEl.className = 'value invalid';
+
+        // 可开手数也无法计算
+        for (let i = 0; i < CONTRACT_COUNT; i++) {
+          const canOpenCell = document.getElementById(`canOpen_${i}`);
+          canOpenCell.textContent = '--';
+          canOpenCell.className = 'result-cell invalid';
+        }
+        return;
+      }
+
+      const availableFunds = equity / 10000 - totalRequired;
+      const formattedAvailable = formatNumber(availableFunds);
+
+      if (formattedAvailable !== null) {
+        availableFundsEl.textContent = formattedAvailable;
+        availableFundsEl.className = availableFunds < 0 ? 'value negative' : 'value';
+      } else {
+        availableFundsEl.textContent = '--';
+        availableFundsEl.className = 'value invalid';
+      }
+
+      // 计算每个合约的可开手数
+      for (let i = 0; i < CONTRACT_COUNT; i++) {
+        const priceInput = document.getElementById(`price_${i}`).value;
+        const marginInput = document.getElementById(`margin_${i}`).value;
+
+        const price = parseFloat(priceInput);
+        const marginRate = parseFloat(marginInput) / 100;
+
+        const canOpenCell = document.getElementById(`canOpen_${i}`);
+
+        // 检查必要参数
+        if (priceInput === '' || marginInput === '' ||
+            isNaN(price) || isNaN(marginRate) ||
+            price <= 0 || marginRate <= 0) {
+          canOpenCell.textContent = '--';
+          canOpenCell.className = 'result-cell invalid';
+          continue;
+        }
+
+        // 可开手数 = (总可用资金 × 10000) ÷ (预结算价 × 1000 × 保证金比例)
+        const canOpen = (availableFunds * 10000) / (price * CONTRACT_MULTIPLIER * marginRate);
+        const formattedCanOpen = formatNumber(canOpen);
+
+        if (formattedCanOpen !== null) {
+          canOpenCell.textContent = formattedCanOpen;
+          canOpenCell.className = canOpen < 0 ? 'result-cell negative' : 'result-cell';
+        } else {
+          canOpenCell.textContent = '--';
+          canOpenCell.className = 'result-cell invalid';
+        }
+      }
+    }
+
+    // 保存并计算
+    function saveAndCalculate() {
+      saveData();
+      calculate();
+    }
+
+    // 重置所有数据
+    function resetAll() {
+      // 清空 localStorage
+      localStorage.removeItem(STORAGE_KEY);
+
+      // 清空当前权益
+      document.getElementById('equity').value = '';
+
+      // 清空所有合约输入
+      for (let i = 0; i < CONTRACT_COUNT; i++) {
+        document.getElementById(`contract_${i}`).value = '';
+        document.getElementById(`price_${i}`).value = '';
+        document.getElementById(`position_${i}`).value = '';
+        document.getElementById(`margin_${i}`).value = '';
+      }
+
+      // 重新计算（显示默认状态）
+      calculate();
+    }
+
+    // 页面加载时初始化
+    window.onload = function() {
+      initTable();
+      loadData();
+      calculate();
+
+      // 注册 Service Worker
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js')
+          .then(() => console.log('Service Worker 注册成功'))
+          .catch((err) => console.log('Service Worker 注册失败:', err));
+      }
+    };
+  </script>
+</body>
+</html>
